@@ -1,10 +1,12 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, make_response
 import psycopg2
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 import pandas as pd
+import simplejson
+import json
 
 
 app = Flask(__name__)
@@ -45,8 +47,9 @@ def data():
 def data2():
     con = psycopg2.connect("host='localhost' dbname='Netlix-1' user='postgres' password='postgres'")
     data2 = pd.read_sql('''select * from  public."Budget_Table"''', con=con)
-    data2 = data2.to_dict(orient="records")
-    return jsonify(data2)
+    data2 = data2.to_json(orient='records',date_format='iso')
+    return jsonify(json.loads(data2))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
