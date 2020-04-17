@@ -41,20 +41,18 @@ CREATE TABLE "IMDB5000" (
 CREATE TABLE "Movie_Map" (
     "Serial" Serial   NOT NULL,
     "movie_title" VARCHAR   NULL,
-    "gross" float(2)  NULL,
-	"budget" float(2) NULL,
+    "gross" INTEGER   NULL,
     "director_name" VARCHAR   NULL,
     "actor_1_name" VARCHAR   NULL,
     "actor_2_name" VARCHAR   NULL,
     "actor_3_name" VARCHAR   NULL,
     "country" VARCHAR   NULL,
     "imdb_score" FLOAT(2)   NULL,
-	"revenue" float(2) NULL,
-	CONSTRAINT "pk_Movie_Map" PRIMARY KEY (
+	"budget" FLOAT(2) NULL,
+    CONSTRAINT "pk_Movie_Map" PRIMARY KEY (
         "Serial"
      )
 );
-
 
 --Create Budget Table--
 CREATE TABLE "Budget_Table" (
@@ -68,25 +66,47 @@ CREATE TABLE "Budget_Table" (
      )
 );
 
+--Create Capital Cities Table--
+CREATE TABLE "Capital_Cities" (
+	"Serial" Serial   NOT NULL,
+    "country" VARCHAR   NULL,
+    "Capital" VARCHAR   NULL,
+   	"CapitalLatitude" FLOAT(10)   NULL,
+    "CapitalLongitude" FLOAT(10)   NULL,
+    CONSTRAINT "pk_Capital_Cities" PRIMARY KEY (
+        "Serial"
+     )
+);
+
+--Upload Capital Cities using country-capitals-final.csv--
+
 --Populate Budget Table from Master--
 INSERT INTO public."Budget_Table" ("movie_title","gross","budget","imdb_score")
-SELECT case when "movie_title" is null then 'unknown' else "movie_title" end as "movie_title"
-,case when "gross" is null then  0 end as "gross",case when "budget" is null then 0 end as "budget", case when "imdb_score" is null then 0 end as "imdb_score" FROM public."IMDB5000";
+SELECT "movie_title","gross","budget","imdb_score" FROM public."IMDB5000";
 
 --Populate Map Table from Master--
-INSERT INTO public."Movie_Map" ("movie_title","gross","director_name","actor_1_name","actor_2_name","actor_3_name","country","imdb_score","budget","revenue")
-SELECT case when "movie_title" is null then 'unknown' else "movie_title" end as "movie_title"
-,case when "gross" is null then cast(0 as int) else cast("gross" as int) end as "gross"
-,case when "director_name" is null then 'unknown' else "director_name" end as "director_name"
-,case when "actor_1_name" is null then 'unkown' else "actor_1_name" end as "actor_1_name"
-,case when "actor_2_name" is null then 'unkown' else "actor_2_name" end as "actor_2_name"
-,case when "actor_3_name" is null then 'unkown' else "actor_3_name" end as "actor_3_name"
-,case when "country" is null then 'unkown' else "country" end as "country"
-,case when "imdb_score" is null then cast(0 as float(2)) else CAST("imdb_score" AS FLOAT(2)) END AS "imdb_score"
-,case when "budget" is null then 0 else "budget" end as "budget"
-,"gross" - "budget" as "revenue"
-FROM public."IMDB5000"
+INSERT INTO public."Movie_Map" ("movie_title","gross","director_name","actor_1_name","actor_2_name","actor_3_name","country","imdb_score","budget")
+SELECT "movie_title","gross","director_name","actor_1_name","actor_2_name","actor_3_name","country",CAST("imdb_score" AS FLOAT(2)) AS "imdb_score","budget"
+FROM public."IMDB5000";
 
-where "budget" is not null and "gross" is not null;
+--Create Final Movie Map Table--
+SELECT DISTINCT A."country",total_movies,case when total_budget is null then 10000 else total_budget end as "total_budget",
+
+case when total_budget is null then '10,000' else to_char(total_budget,'999,999,999,999,999') end as "budget_thousands",
+
+E."Capital",E."CapitalLatitude",E."CapitalLongitude",cast("avg_imdb" as float(2)) as "avg_imdb"
+
+INTO public."Movie_Map_Final"
+FROM public."Movie_Map" A
+LEFT JOIN (SELECT "country",sum(budget) AS "total_budget" from public."Movie_Map" group by "country") B
+	ON A."country"= B."country"
+LEFT JOIN (SELECT "country",count(movie_title) AS "total_movies" from public."Movie_Map" group by "country") C
+	ON A."country" = C."country"
+LEFT JOIN (SELECT "country",avg(imdb_score) AS "avg_imdb"  from public."Movie_Map" group by "country") D
+	ON A."country" = D."country"
+RIGHT JOIN public."Capital_Cities" E
+	ON A."country" = E."country";
+
+
 
 

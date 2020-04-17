@@ -26,23 +26,34 @@ function ColorCheck(d) {
   };
 }
 
+function radiusScale(d) {
+  if (d >= 100000000000) {
+      return 500000;
+  } else if (d >= 10000000000) {
+      return 200000;
+  }    
+    else {
+      return 150000;
+  };
+}
+
 function createMap(movieData) {
 movie_Data = movieData.map((feature) =>
 L.circle([feature.CapitalLatitude,feature.CapitalLongitude], {
-  color: "red",
-  fillColor: "red",
+  color: ColorCheck(feature.total_budget),
+  fillColor: ColorCheck(feature.total_budget),
   fillOpacity: 0.75,
-  radius: 200000
+  radius:  radiusScale(feature.total_budget)
 }).bindPopup("<h2> Country : " + feature.country +
 "</h2><hr><h3> Total Movies: " + feature.total_movies +
-"</h3><hr><p> Total Budget: " + feature.total_budget + "</p>")
+"</h3><hr><p> Total Budget: " + feature.budget_thousands + 
+"</h4><hr><p> Avg IMDB: " + feature.avg_imdb +
+"</p>")
 )
 
 var movie_Data=L.layerGroup(movie_Data)
   
-   
-  
-  var worldmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+   var worldmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
     maxZoom: 18,
     id: "mapbox.streets",
@@ -62,7 +73,7 @@ var movie_Data=L.layerGroup(movie_Data)
   
   var myMap = L.map("map", {
     center: [
-      0,0
+      0,15
     ],
     zoom: 2.5,
     layers: [worldmap,movie_Data]
