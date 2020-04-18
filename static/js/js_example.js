@@ -106,4 +106,4 @@ return div;
 
 legend.addTo(myMap);
   
-}
+};
